@@ -1,5 +1,9 @@
 import { format, formatDistance } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { DOCUMENT_STATUS, PRIORITY } from './constants'; // ADD THIS
+
+
+// ... rest of code
 
 export const formatDate = (date) => {
   if (!date) return '';

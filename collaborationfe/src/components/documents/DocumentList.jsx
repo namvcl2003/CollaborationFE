@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+import { FileText, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { documentsAPI } from '../../api/documents';
