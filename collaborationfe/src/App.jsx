@@ -7,6 +7,7 @@ import Layout from './components/layout/Layout';
 import { useAuthStore } from './store/authStore';
 
 // Pages
+import UserManagement from './components/admin/UserManagement';
 import CreateDocument from './pages/CreateDocument';
 import Dashboard from './pages/Dashboard';
 import DocumentDetails from './pages/DocumentDetails';
@@ -14,7 +15,6 @@ import Documents from './pages/Documents';
 import Login from './pages/Login';
 import MyAssignments from './pages/MyAssignments';
 import Notifications from './pages/Notifications';
-
 function App() {
   const { checkAuth, isLoading } = useAuthStore();
 
@@ -108,6 +108,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/users" element={<UserManagement />} />
 
           {/* 404 */}
           <Route
