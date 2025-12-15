@@ -68,7 +68,7 @@ const DocumentVersions = ({ documentId }) => {
                     </span>
                     <span className="flex items-center">
                       <User className="h-3 w-3 mr-1" />
-                      User ID: {version.CreatedByUserId}
+                      {version.created_by?.FullName || `User ID: ${version.CreatedByUserId}`}
                     </span>
                   </div>
                 </div>

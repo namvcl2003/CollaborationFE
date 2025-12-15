@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { notificationsAPI } from '../../api/notifications';
 import { useAuthStore } from '../../store/authStore';
+import logoWeb from '../../../assets/images/logo_web3.png';
 
 const Navbar = () => {
   const { user, logout } = useAuthStore();
@@ -12,7 +13,17 @@ const Navbar = () => {
   useEffect(() => {
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 30000); // Refresh mỗi 30s
-    return () => clearInterval(interval);
+
+    // Listen for notification read events to update badge immediately
+    const handleNotificationRead = () => {
+      fetchUnreadCount();
+    };
+    window.addEventListener('notificationRead', handleNotificationRead);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notificationRead', handleNotificationRead);
+    };
   }, []);
 
   const fetchUnreadCount = async () => {
@@ -34,10 +45,12 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center">
-              <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">D</span>
-              </div>
-              <span className="ml-2 text-xl font-semibold text-gray-900">
+              <img
+                src={logoWeb}
+                alt="Logo"
+                className="h-10 w-auto"
+              />
+              <span className="ml-3 text-xl font-semibold text-gray-900">
                 Document System
               </span>
             </Link>

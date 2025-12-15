@@ -1,14 +1,15 @@
-import { Lock, LogIn, User } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import Button from '../common/Button';
+import logoWeb from '../../../assets/images/logo_web3.png';
 
 const LoginForm = () => {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
-  
+
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -42,8 +43,12 @@ const LoginForm = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-primary-600 rounded-full flex items-center justify-center">
-            <LogIn className="h-8 w-8 text-white" />
+          <div className="mx-auto w-32 h-32 flex items-center justify-center">
+            <img
+              src={logoWeb}
+              alt="Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             Hệ thống Soạn thảo Văn bản
@@ -94,7 +99,6 @@ const LoginForm = () => {
             type="submit"
             fullWidth
             loading={loading}
-            icon={LogIn}
           >
             Đăng nhập
           </Button>

@@ -1056,16 +1056,16 @@ const UserManagement = () => {
 
   if (loading && users.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-96">
         <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6">
+      <div>
         <h1 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
         <p className="text-gray-600 mt-1">
           Quản lý tài khoản và phân quyền người dùng trong hệ thống

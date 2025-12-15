@@ -245,8 +245,10 @@ const DocumentDetail = () => {
                       File đính kèm
                     </h3>
                     <div className="flex items-center space-x-2">
-                      <FileText className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-900">{document.FileName}</span>
+                      <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-gray-900 truncate" title={document.FileName}>
+                        {document.FileName}
+                      </span>
                     </div>
                   </div>
 

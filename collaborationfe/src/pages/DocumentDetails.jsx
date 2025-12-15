@@ -208,7 +208,9 @@ const DocumentDetails = () => {
 
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">File đính kèm</h3>
-                  <p className="text-gray-900">{document.FileName}</p>
+                  <p className="text-gray-900 truncate" title={document.FileName}>
+                    {document.FileName}
+                  </p>
                 </div>
               </div>
             </div>

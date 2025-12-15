@@ -14,6 +14,10 @@ const DocumentList = () => {
     status_filter: '',
     search: '',
   });
+
+  const handlePageSizeChange = (newSize) => {
+    setFilters({ ...filters, page_size: newSize, page: 1 });
+  };
   const [pagination, setPagination] = useState({
     total: 0,
     total_pages: 0,
@@ -21,7 +25,7 @@ const DocumentList = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [filters.page, filters.status_filter]);
+  }, [filters.page, filters.status_filter, filters.page_size]);
 
   const fetchDocuments = async () => {
     setLoading(true);
@@ -136,31 +140,122 @@ const DocumentList = () => {
         </div>
       )}
 
-      {/* Pagination */}
-      {pagination.total_pages > 1 && (
-        <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 px-4 py-3">
-          <div className="text-sm text-gray-700">
-            Hiển thị <span className="font-medium">{documents.length}</span> trong tổng số{' '}
-            <span className="font-medium">{pagination.total}</span> văn bản
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handlePageChange(filters.page - 1)}
-              disabled={filters.page === 1}
-              className="px-3 py-1 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-              Trước
-            </button>
-            <span className="px-3 py-1 text-sm">
-              Trang {filters.page} / {pagination.total_pages}
-            </span>
-            <button
-              onClick={() => handlePageChange(filters.page + 1)}
-              disabled={filters.page === pagination.total_pages}
-              className="px-3 py-1 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-              Sau
-            </button>
+      {/* Pagination - Always show if there are documents */}
+      {documents.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 px-6 py-4 shadow-sm">
+          <div className="flex flex-col gap-4">
+            {/* Top row: Info and Page Size Selector */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              {/* Info */}
+              <div className="text-sm text-gray-700">
+                Hiển thị{' '}
+                <span className="font-semibold text-primary-600">
+                  {((filters.page - 1) * filters.page_size) + 1}
+                </span>
+                {' '}-{' '}
+                <span className="font-semibold text-primary-600">
+                  {Math.min(filters.page * filters.page_size, pagination.total)}
+                </span>
+                {' '}trong tổng số{' '}
+                <span className="font-semibold text-primary-600">{pagination.total}</span> văn bản
+              </div>
+
+              {/* Page Size Selector */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600">Hiển thị:</label>
+                <select
+                  value={filters.page_size}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value={5}>5 / trang</option>
+                  <option value={10}>10 / trang</option>
+                  <option value={20}>20 / trang</option>
+                  <option value={50}>50 / trang</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Page navigation - Only show if multiple pages */}
+            {pagination.total_pages > 1 && (
+            <div className="flex items-center justify-center gap-1">
+              {/* Previous button */}
+              <button
+                onClick={() => handlePageChange(filters.page - 1)}
+                disabled={filters.page === 1}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                ← Trước
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex gap-1">
+                {(() => {
+                  const pages = [];
+                  const totalPages = pagination.total_pages;
+                  const current = filters.page;
+
+                  // Luôn hiển thị trang đầu
+                  pages.push(1);
+
+                  // Thêm ... nếu cần
+                  if (current > 3) {
+                    pages.push('...');
+                  }
+
+                  // Hiển thị các trang xung quanh trang hiện tại
+                  for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
+                    if (!pages.includes(i)) {
+                      pages.push(i);
+                    }
+                  }
+
+                  // Thêm ... nếu cần
+                  if (current < totalPages - 2) {
+                    pages.push('...');
+                  }
+
+                  // Luôn hiển thị trang cuối
+                  if (totalPages > 1 && !pages.includes(totalPages)) {
+                    pages.push(totalPages);
+                  }
+
+                  return pages.map((page, index) => {
+                    if (page === '...') {
+                      return (
+                        <span key={`ellipsis-${index}`} className="px-3 py-2 text-gray-500">
+                          ...
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          page === current
+                            ? 'bg-primary-600 text-white'
+                            : 'border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Next button */}
+              <button
+                onClick={() => handlePageChange(filters.page + 1)}
+                disabled={filters.page === pagination.total_pages}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Sau →
+              </button>
+            </div>
+            )}
           </div>
         </div>
       )}

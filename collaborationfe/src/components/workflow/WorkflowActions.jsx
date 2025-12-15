@@ -5,8 +5,10 @@ import { usersAPI } from '../../api/users';
 import { workflowAPI } from '../../api/workflow';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
+import { useAuthStore } from '../../store/authStore';
 
 const WorkflowActions = ({ document, onActionComplete }) => {
+  const currentUser = useAuthStore((state) => state.user);
   const [showModal, setShowModal] = useState(false);
   const [actionType, setActionType] = useState(null);
   const [users, setUsers] = useState([]);
@@ -14,10 +16,22 @@ const WorkflowActions = ({ document, onActionComplete }) => {
   const [comments, setComments] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const canSubmit = document.status?.StatusCode === 'DRAFT' || 
-                    document.status?.StatusCode === 'REVISION_REQUESTED';
-  const canApprove = document.status?.StatusCode === 'PENDING' || 
-                     document.status?.StatusCode === 'IN_REVIEW';
+  // Check if current user is the handler
+  const isCurrentHandler = document.CurrentHandlerUserId === currentUser?.UserId;
+
+  // Chỉ hiển thị nút Gửi duyệt nếu:
+  // 1. Văn bản ở trạng thái DRAFT hoặc REVISION_REQUESTED
+  // 2. User hiện tại là người đang xử lý (CurrentHandler)
+  const canSubmit = isCurrentHandler &&
+                    (document.status?.StatusCode === 'DRAFT' ||
+                     document.status?.StatusCode === 'REVISION_REQUESTED');
+
+  // Chỉ hiển thị nút Phê duyệt/Từ chối nếu:
+  // 1. Văn bản ở trạng thái PENDING hoặc IN_REVIEW
+  // 2. User hiện tại là người đang xử lý (CurrentHandler)
+  const canApprove = isCurrentHandler &&
+                     (document.status?.StatusCode === 'PENDING' ||
+                      document.status?.StatusCode === 'IN_REVIEW');
   const canReject = canApprove;
   const canRequestRevision = canApprove;
 
