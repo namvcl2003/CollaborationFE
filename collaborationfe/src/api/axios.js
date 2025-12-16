@@ -29,12 +29,30 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Nếu token hết hạn (401) và chưa retry
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Bỏ qua interceptor cho login endpoint
+    const isLoginRequest = originalRequest.url?.includes('/auth/login');
+    const isChangePasswordRequest = originalRequest.url?.includes('/auth/change-password');
+
+    // Nếu token hết hạn (401) và chưa retry, và KHÔNG phải login request
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isLoginRequest &&
+      !isChangePasswordRequest
+    ) {
       originalRequest._retry = true;
 
       try {
         const refreshToken = localStorage.getItem('refresh_token');
+
+        // Nếu không có refresh token, redirect về login
+        if (!refreshToken) {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          window.location.href = '/login';
+          return Promise.reject(error);
+        }
+
         const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
           refresh_token: refreshToken,
         });

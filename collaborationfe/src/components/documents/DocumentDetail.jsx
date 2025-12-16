@@ -7,6 +7,7 @@ import {
     Edit,
     FileText,
     FolderOpen,
+    Trash2,
     User
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -18,6 +19,7 @@ import { downloadFile, formatDate, formatRelativeTime } from '../../utils/helper
 import Button from '../common/Button';
 import Loading from '../common/Loading';
 import StatusBadge from '../common/StatusBadge';
+import Avatar from '../common/Avatar';
 import WorkflowActions from '../workflow/WorkflowActions';
 import WorkflowHistory from '../workflow/WorkflowHistory';
 import CollaboraEditor from './CollaboraEditor';
@@ -57,6 +59,21 @@ const DocumentDetail = () => {
     } catch (error) {
       console.error('Error downloading document:', error);
       toast.error('Không thể tải xuống file');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa văn bản này? Hành động này không thể hoàn tác.')) {
+      return;
+    }
+
+    try {
+      await documentsAPI.deleteDocument(id);
+      toast.success('Đã xóa văn bản thành công');
+      navigate('/documents');
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast.error(error.response?.data?.detail || 'Không thể xóa văn bản');
     }
   };
 
@@ -139,6 +156,28 @@ const DocumentDetail = () => {
             >
               Tải xuống
             </Button>
+
+            {/* Delete button - only show for draft documents created by current user */}
+            {/* DEBUG INFO - XÓA SAU KHI FIX */}
+            <div className="p-2 bg-yellow-100 border border-yellow-300 rounded text-xs">
+              <div>StatusId: {document.StatusId} (cần = 1)</div>
+              <div>Created by UserId: {document.created_by?.UserId}</div>
+              <div>Current user UserId: {user?.UserId}</div>
+              <div>Is Draft: {document.StatusId === 1 ? 'YES' : 'NO'}</div>
+              <div>Is Creator: {document.created_by?.UserId === user?.UserId ? 'YES' : 'NO'}</div>
+              <div>Can Delete: {(document.StatusId === 1 && document.created_by?.UserId === user?.UserId) ? 'YES ✅' : 'NO ❌'}</div>
+            </div>
+
+            {document.StatusId === 1 && document.created_by?.UserId === user?.UserId && (
+              <Button
+                variant="outline"
+                icon={Trash2}
+                onClick={handleDelete}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+              >
+                Xóa văn bản
+              </Button>
+            )}
           </div>
         </div>
 
@@ -206,11 +245,16 @@ const DocumentDetail = () => {
                     <h3 className="text-sm font-medium text-gray-500 mb-2">
                       Người tạo
                     </h3>
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-900">
-                        {document.created_by?.FullName || 'N/A'}
-                      </span>
+                    <div className="flex items-center space-x-3">
+                      <Avatar user={document.created_by} size="sm" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {document.created_by?.FullName || 'N/A'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {document.created_by?.role?.RoleName}
+                        </p>
+                      </div>
                     </div>
                   </div>
 

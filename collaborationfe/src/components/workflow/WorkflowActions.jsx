@@ -18,6 +18,8 @@ const WorkflowActions = ({ document, onActionComplete }) => {
 
   // Check if current user is the handler
   const isCurrentHandler = document.CurrentHandlerUserId === currentUser?.UserId;
+  const userRoleLevel = currentUser?.role?.RoleLevel;
+  const documentPriority = document.Priority; // 1 = HIGH, 2 = MEDIUM, 3 = LOW
 
   // Chỉ hiển thị nút Gửi duyệt nếu:
   // 1. Văn bản ở trạng thái DRAFT hoặc REVISION_REQUESTED
@@ -29,11 +31,27 @@ const WorkflowActions = ({ document, onActionComplete }) => {
   // Chỉ hiển thị nút Phê duyệt/Từ chối nếu:
   // 1. Văn bản ở trạng thái PENDING hoặc IN_REVIEW
   // 2. User hiện tại là người đang xử lý (CurrentHandler)
-  const canApprove = isCurrentHandler &&
-                     (document.status?.StatusCode === 'PENDING' ||
-                      document.status?.StatusCode === 'IN_REVIEW');
-  const canReject = canApprove;
-  const canRequestRevision = canApprove;
+  const canReview = isCurrentHandler &&
+                    (document.status?.StatusCode === 'PENDING' ||
+                     document.status?.StatusCode === 'IN_REVIEW');
+
+  // ============================================================================
+  // LOGIC MỚI: Phó phòng (Level 2) chỉ phê duyệt văn bản ưu tiên THẤP/TRUNG BÌNH
+  // ============================================================================
+  // Phó phòng với văn bản ưu tiên CAO: CHỈ được gửi lên, KHÔNG được phê duyệt
+  const isViceManagerWithHighPriority = userRoleLevel === 2 && documentPriority === 1;
+
+  // Có thể phê duyệt trực tiếp:
+  // - Trưởng phòng (Level 3) với bất kỳ ưu tiên nào
+  // - Phó phòng (Level 2) với ưu tiên THẤP hoặc TRUNG BÌNH
+  const canApprove = canReview && !isViceManagerWithHighPriority;
+
+  // Có thể gửi lên cấp trên:
+  // - Phó phòng (Level 2) muốn gửi lên trưởng phòng
+  const canForwardToManager = canReview && userRoleLevel === 2;
+
+  const canReject = canReview;
+  const canRequestRevision = canReview;
 
   const handleAction = async () => {
     if (!actionType) return;
@@ -41,7 +59,7 @@ const WorkflowActions = ({ document, onActionComplete }) => {
     setLoading(true);
     try {
       let result;
-      
+
       switch (actionType) {
         case 'submit':
           if (!selectedUser) {
@@ -61,6 +79,20 @@ const WorkflowActions = ({ document, onActionComplete }) => {
             SendToNextLevel: false,
           });
           toast.success('Phê duyệt văn bản thành công!');
+          break;
+
+        case 'forward':
+          // Phó phòng gửi lên trưởng phòng
+          if (!selectedUser) {
+            toast.error('Vui lòng chọn trưởng phòng');
+            return;
+          }
+          result = await workflowAPI.approveDocument(document.DocumentId, {
+            Comments: comments,
+            SendToNextLevel: true,
+            NextLevelUserId: parseInt(selectedUser),
+          });
+          toast.success('Đã gửi văn bản lên trưởng phòng!');
           break;
 
         case 'reject':
@@ -104,7 +136,7 @@ const WorkflowActions = ({ document, onActionComplete }) => {
 
   const openModal = async (type) => {
     setActionType(type);
-    
+
     if (type === 'submit') {
       try {
         const data = await usersAPI.getHigherLevelUsers();
@@ -112,6 +144,16 @@ const WorkflowActions = ({ document, onActionComplete }) => {
       } catch (error) {
         console.error('Error fetching users:', error);
         toast.error('Không thể tải danh sách người dùng');
+        return;
+      }
+    } else if (type === 'forward') {
+      // Phó phòng gửi lên trưởng phòng (Level 3)
+      try {
+        const data = await usersAPI.getHigherLevelUsers();
+        setUsers(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Không thể tải danh sách trưởng phòng');
         return;
       }
     } else if (type === 'revision') {
@@ -124,7 +166,7 @@ const WorkflowActions = ({ document, onActionComplete }) => {
         return;
       }
     }
-    
+
     setShowModal(true);
   };
 
@@ -132,6 +174,7 @@ const WorkflowActions = ({ document, onActionComplete }) => {
     switch (actionType) {
       case 'submit': return 'Gửi văn bản';
       case 'approve': return 'Phê duyệt văn bản';
+      case 'forward': return 'Gửi lên trưởng phòng';
       case 'reject': return 'Từ chối văn bản';
       case 'revision': return 'Yêu cầu chỉnh sửa';
       default: return '';
@@ -151,32 +194,50 @@ const WorkflowActions = ({ document, onActionComplete }) => {
           </Button>
         )}
 
+        {/* Phê duyệt - Chỉ hiển thị nếu KHÔNG phải phó phòng với văn bản ưu tiên cao */}
         {canApprove && (
-          <>
-            <Button
-              variant="success"
-              icon={CheckCircle}
-              onClick={() => openModal('approve')}
-            >
-              Phê duyệt
-            </Button>
+          <Button
+            variant="success"
+            icon={CheckCircle}
+            onClick={() => openModal('approve')}
+          >
+            Phê duyệt
+          </Button>
+        )}
 
-            <Button
-              variant="warning"
-              icon={RotateCcw}
-              onClick={() => openModal('revision')}
-            >
-              Yêu cầu chỉnh sửa
-            </Button>
+        {/* Gửi lên trưởng phòng - Chỉ cho phó phòng */}
+        {canForwardToManager && (
+          <Button
+            variant="primary"
+            icon={Send}
+            onClick={() => openModal('forward')}
+          >
+            {isViceManagerWithHighPriority
+              ? 'Gửi lên trưởng phòng (Bắt buộc)'
+              : 'Gửi lên trưởng phòng'
+            }
+          </Button>
+        )}
 
-            <Button
-              variant="danger"
-              icon={XCircle}
-              onClick={() => openModal('reject')}
-            >
-              Từ chối
-            </Button>
-          </>
+        {/* Yêu cầu chỉnh sửa và Từ chối */}
+        {canRequestRevision && (
+          <Button
+            variant="warning"
+            icon={RotateCcw}
+            onClick={() => openModal('revision')}
+          >
+            Yêu cầu chỉnh sửa
+          </Button>
+        )}
+
+        {canReject && (
+          <Button
+            variant="danger"
+            icon={XCircle}
+            onClick={() => openModal('reject')}
+          >
+            Từ chối
+          </Button>
         )}
       </div>
 
@@ -186,17 +247,21 @@ const WorkflowActions = ({ document, onActionComplete }) => {
         title={getModalTitle()}
       >
         <div className="space-y-4">
-          {(actionType === 'submit' || actionType === 'revision') && (
+          {(actionType === 'submit' || actionType === 'forward' || actionType === 'revision') && (
             <div>
               <label className="label">
-                {actionType === 'submit' ? 'Gửi đến' : 'Gửi lại cho'} *
+                {actionType === 'submit' ? 'Gửi đến' :
+                 actionType === 'forward' ? 'Chọn trưởng phòng' :
+                 'Gửi lại cho'} *
               </label>
               <select
                 className="input"
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
               >
-                <option value="">Chọn người nhận</option>
+                <option value="">
+                  {actionType === 'forward' ? 'Chọn trưởng phòng' : 'Chọn người nhận'}
+                </option>
                 {users.map((user) => (
                   <option key={user.UserId} value={user.UserId}>
                     {user.FullName} - {user.role?.RoleName}

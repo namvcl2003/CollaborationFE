@@ -1,8 +1,9 @@
-import { Clock, MessageSquare, User } from 'lucide-react';
+import { Clock, MessageSquare, User, ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { workflowAPI } from '../../api/workflow';
 import { formatDate } from '../../utils/helpers';
 import Loading from '../common/Loading';
+import Avatar from '../common/Avatar';
 
 const WorkflowHistory = ({ documentId }) => {
   const [history, setHistory] = useState([]);
@@ -70,8 +71,8 @@ const WorkflowHistory = ({ documentId }) => {
                   <div className="relative flex items-start space-x-3">
                     <div>
                       <div className="relative px-1">
-                        <div className="h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center ring-8 ring-white">
-                          <User className="h-5 w-5 text-primary-600" />
+                        <div className="ring-8 ring-white rounded-full">
+                          <Avatar user={item.from_user} size="md" />
                         </div>
                       </div>
                     </div>
@@ -86,9 +87,13 @@ const WorkflowHistory = ({ documentId }) => {
                           </span>
                         </div>
                         {item.to_user && (
-                          <p className="text-sm text-gray-500 mt-0.5">
-                            → {item.to_user.FullName}
-                          </p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <ArrowRight className="h-3 w-3 text-gray-400" />
+                            <Avatar user={item.to_user} size="xs" />
+                            <p className="text-sm text-gray-600">
+                              {item.to_user.FullName}
+                            </p>
+                          </div>
                         )}
                         <p className="text-xs text-gray-500 flex items-center mt-1">
                           <Clock className="h-3 w-3 mr-1" />

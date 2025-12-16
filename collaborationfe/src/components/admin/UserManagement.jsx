@@ -754,12 +754,14 @@ import {
     Search,
     Trash2,
     UserCheck,
+    Users,
     X
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { usersAPI } from '../../api/users';
 import Button from '../common/Button';
+import Avatar from '../common/Avatar';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -768,6 +770,8 @@ const UserManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [activeUsersCount, setActiveUsersCount] = useState(0);
+  const [inactiveUsersCount, setInactiveUsersCount] = useState(0);
   const pageSize = 10;
 
   const [roles, setRoles] = useState([]);
@@ -806,6 +810,8 @@ const UserManagement = () => {
       setUsers(data.users || []);
       setTotalPages(Math.ceil(data.total / pageSize));
       setTotalUsers(data.total || 0);
+      setActiveUsersCount(data.active_users || 0);
+      setInactiveUsersCount(data.inactive_users || 0);
     } catch (error) {
       console.error('❌ Error fetching users:', error);
       console.error('📍 Error details:', {
@@ -982,10 +988,10 @@ const UserManagement = () => {
 
   const getRoleBadgeColor = (roleLevel) => {
     switch (roleLevel) {
-      case 3: return 'bg-purple-100 text-purple-800';
-      case 2: return 'bg-blue-100 text-blue-800';
-      case 1: return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 3: return 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400';
+      case 2: return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400';
+      case 1: return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -1002,8 +1008,8 @@ const UserManagement = () => {
           onClick={() => setCurrentPage(1)}
           className={`px-3 py-1 rounded ${
             currentPage === 1
-              ? 'bg-primary-600 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-100'
+              ? 'bg-primary-600 dark:bg-primary-700 text-white'
+              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'
           }`}
         >
           1
@@ -1012,7 +1018,7 @@ const UserManagement = () => {
     }
 
     if (showEllipsisStart) {
-      pages.push(<span key="ellipsis-start" className="px-2">...</span>);
+      pages.push(<span key="ellipsis-start" className="px-2 text-gray-500 dark:text-gray-400">...</span>);
     }
 
     for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
@@ -1022,8 +1028,8 @@ const UserManagement = () => {
           onClick={() => setCurrentPage(i)}
           className={`px-3 py-1 rounded ${
             currentPage === i
-              ? 'bg-primary-600 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-100'
+              ? 'bg-primary-600 dark:bg-primary-700 text-white'
+              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'
           }`}
         >
           {i}
@@ -1032,7 +1038,7 @@ const UserManagement = () => {
     }
 
     if (showEllipsisEnd) {
-      pages.push(<span key="ellipsis-end" className="px-2">...</span>);
+      pages.push(<span key="ellipsis-end" className="px-2 text-gray-500 dark:text-gray-400">...</span>);
     }
 
     if (totalPages > 1) {
@@ -1042,8 +1048,8 @@ const UserManagement = () => {
           onClick={() => setCurrentPage(totalPages)}
           className={`px-3 py-1 rounded ${
             currentPage === totalPages
-              ? 'bg-primary-600 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-100'
+              ? 'bg-primary-600 dark:bg-primary-700 text-white'
+              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'
           }`}
         >
           {totalPages}
@@ -1064,103 +1070,140 @@ const UserManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
-        <p className="text-gray-600 mt-1">
-          Quản lý tài khoản và phân quyền người dùng trong hệ thống
-        </p>
-      </div>
-
-      {/* Actions Bar */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm theo tên, email..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
+      {/* Header Section with Gradient */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-600 p-8 text-white shadow-2xl">
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="h-12 w-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <Users className="h-7 w-7" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold">Quản lý người dùng</h1>
+                <p className="text-primary-100 mt-1">
+                  Quản lý tài khoản và phân quyền người dùng trong hệ thống
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="group flex items-center space-x-2 px-6 py-3 bg-white text-primary-600 rounded-xl font-semibold hover:shadow-xl transition-all duration-300"
+            >
+              <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform duration-300" />
+              <span>Thêm người dùng</span>
+            </button>
           </div>
 
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-5 w-5" />
-            Thêm người dùng
-          </Button>
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white bg-opacity-10 rounded-lg px-4 py-3 backdrop-blur-sm">
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5" />
+                <div>
+                  <p className="text-sm opacity-90">Tổng số</p>
+                  <p className="text-2xl font-bold">{totalUsers}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white bg-opacity-10 rounded-lg px-4 py-3 backdrop-blur-sm">
+              <div className="flex items-center space-x-2">
+                <UserCheck className="h-5 w-5" />
+                <div>
+                  <p className="text-sm opacity-90">Hoạt động</p>
+                  <p className="text-2xl font-bold">{activeUsersCount}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white bg-opacity-10 rounded-lg px-4 py-3 backdrop-blur-sm">
+              <div className="flex items-center space-x-2">
+                <X className="h-5 w-5" />
+                <div>
+                  <p className="text-sm opacity-90">Vô hiệu</p>
+                  <p className="text-2xl font-bold">{inactiveUsersCount}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="absolute top-0 right-0 -mt-12 -mr-12 h-64 w-64 rounded-full bg-white opacity-5"></div>
+        <div className="absolute bottom-0 left-0 -mb-12 -ml-12 h-64 w-64 rounded-full bg-white opacity-5"></div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên, email..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          />
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Người dùng
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Vai trò
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Phòng ban
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     Không tìm thấy người dùng nào
                   </td>
                 </tr>
               ) : (
                 users.map((user) => (
-                  <tr key={user.UserId} className="hover:bg-gray-50 transition-colors">
+                  <tr key={user.UserId} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-semibold">
-                            {user.FullName?.charAt(0)?.toUpperCase() || 'U'}
-                          </div>
-                        </div>
+                        <Avatar user={user} size="md" />
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.FullName}</div>
-                          <div className="text-sm text-gray-500">@{user.Username}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{user.FullName}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">@{user.Username}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.Email || '-'}</div>
+                      <div className="text-sm text-gray-900 dark:text-gray-300">{user.Email || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(user.RoleLevel)}`}>
                         {user.RoleName}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
                       {user.DepartmentName || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         user.IsActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                          : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
                       }`}>
                         {user.IsActive ? 'Hoạt động' : 'Vô hiệu'}
                       </span>
@@ -1202,9 +1245,9 @@ const UserManagement = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
+              <div className="text-sm text-gray-700 dark:text-gray-300">
                 Hiển thị <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> đến{' '}
                 <span className="font-medium">{Math.min(currentPage * pageSize, totalUsers)}</span> trong tổng số{' '}
                 <span className="font-medium">{totalUsers}</span> người dùng
@@ -1213,7 +1256,7 @@ const UserManagement = () => {
                 <button
                   onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -1221,7 +1264,7 @@ const UserManagement = () => {
                 <button
                   onClick={() => setCurrentPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
@@ -1234,7 +1277,7 @@ const UserManagement = () => {
       {/* Create Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Thêm người dùng mới</h3>
               <button
@@ -1249,7 +1292,7 @@ const UserManagement = () => {
             </div>
             <form onSubmit={handleCreateUser} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Tên đăng nhập <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -1257,13 +1300,13 @@ const UserManagement = () => {
                   required
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="username"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Mật khẩu <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -1271,13 +1314,13 @@ const UserManagement = () => {
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="••••••••"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Họ và tên <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -1285,31 +1328,31 @@ const UserManagement = () => {
                   required
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Nguyễn Văn A"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="user@example.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Vai trò <span className="text-red-500">*</span>
                 </label>
                 <select
                   required
                   value={formData.role_id}
                   onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="">Chọn vai trò</option>
                   {roles.map((role) => (
@@ -1321,11 +1364,11 @@ const UserManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phòng ban</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phòng ban</label>
                 <select
                   value={formData.department_id}
                   onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="">Chọn phòng ban</option>
                   {departments.map((dept) => (
@@ -1359,7 +1402,7 @@ const UserManagement = () => {
       {/* Edit Modal */}
       {isEditModalOpen && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Chỉnh sửa người dùng</h3>
               <button
@@ -1374,31 +1417,31 @@ const UserManagement = () => {
             </div>
             <form onSubmit={handleUpdateUser} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên đăng nhập</label>
                 <input
                   type="text"
                   value={formData.username}
                   disabled
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                 />
-                <p className="mt-1 text-xs text-gray-500">Không thể thay đổi tên đăng nhập</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Không thể thay đổi tên đăng nhập</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Mật khẩu mới
                 </label>
                 <input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Để trống nếu không đổi"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Họ và tên <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -1406,29 +1449,29 @@ const UserManagement = () => {
                   required
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Vai trò <span className="text-red-500">*</span>
                 </label>
                 <select
                   required
                   value={formData.role_id}
                   onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Chọn vai trò</option>
                   {roles.map((role) => (
@@ -1440,11 +1483,11 @@ const UserManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phòng ban</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phòng ban</label>
                 <select
                   value={formData.department_id}
                   onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Chọn phòng ban</option>
                   {departments.map((dept) => (

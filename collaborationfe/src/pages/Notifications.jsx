@@ -215,20 +215,20 @@ const Notifications = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="bg-white rounded-xl shadow-sm p-2 flex space-x-2">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-2 flex space-x-2">
         <button
           onClick={() => setFilter('all')}
           className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
             filter === 'all'
-              ? 'bg-primary-600 text-white shadow-md'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'bg-primary-600 dark:bg-primary-700 text-white shadow-md'
+              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
           }`}
         >
           <div className="flex items-center justify-center space-x-2">
             <Inbox className="h-5 w-5" />
             <span>Tất cả</span>
             <span className={`px-2 py-0.5 rounded-full text-xs ${
-              filter === 'all' ? 'bg-white bg-opacity-20' : 'bg-gray-200'
+              filter === 'all' ? 'bg-white bg-opacity-20' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
             }`}>
               {notifications.length}
             </span>
@@ -238,8 +238,8 @@ const Notifications = () => {
           onClick={() => setFilter('unread')}
           className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
             filter === 'unread'
-              ? 'bg-primary-600 text-white shadow-md'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'bg-primary-600 dark:bg-primary-700 text-white shadow-md'
+              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
           }`}
         >
           <div className="flex items-center justify-center space-x-2">
@@ -247,7 +247,7 @@ const Notifications = () => {
             <span>Chưa đọc</span>
             {unreadCount > 0 && (
               <span className={`px-2 py-0.5 rounded-full text-xs ${
-                filter === 'unread' ? 'bg-white bg-opacity-20' : 'bg-red-100 text-red-600'
+                filter === 'unread' ? 'bg-white bg-opacity-20' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
               }`}>
                 {unreadCount}
               </span>
@@ -258,8 +258,8 @@ const Notifications = () => {
           onClick={() => setFilter('read')}
           className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
             filter === 'read'
-              ? 'bg-primary-600 text-white shadow-md'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'bg-primary-600 dark:bg-primary-700 text-white shadow-md'
+              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
           }`}
         >
           <div className="flex items-center justify-center space-x-2">
@@ -271,16 +271,16 @@ const Notifications = () => {
 
       {/* Notifications List */}
       {filteredNotifications.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-lg text-center py-16">
-          <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 mb-4">
-            <Bell className="h-10 w-10 text-gray-400" />
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg text-center py-16">
+          <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
+            <Bell className="h-10 w-10 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             {filter === 'unread' ? 'Không có thông báo chưa đọc' :
              filter === 'read' ? 'Không có thông báo đã đọc' :
              'Không có thông báo'}
           </h3>
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-gray-400">
             {filter === 'all' && 'Bạn sẽ nhận được thông báo khi có hoạt động mới'}
           </p>
         </div>
@@ -292,16 +292,16 @@ const Notifications = () => {
               <div
                 key={notification.NotificationId}
                 onClick={() => handleNotificationClick(notification)}
-                className={`group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 ${
+                className={`group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 ${
                   !notification.IsRead
-                    ? 'border-primary-500'
+                    ? 'border-primary-500 dark:border-primary-400'
                     : 'border-transparent'
                 }`}
               >
                 <div className="p-5">
                   <div className="flex items-start space-x-4">
                     {/* Icon */}
-                    <div className={`flex-shrink-0 p-3 rounded-xl ${iconConfig.bgColor} ${iconConfig.textColor}`}>
+                    <div className={`flex-shrink-0 p-3 rounded-xl ${iconConfig.bgColor} dark:opacity-80 ${iconConfig.textColor}`}>
                       {iconConfig.icon}
                     </div>
 
@@ -312,7 +312,7 @@ const Notifications = () => {
                           {/* Title */}
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className={`text-base font-semibold ${
-                              !notification.IsRead ? 'text-gray-900' : 'text-gray-700'
+                              !notification.IsRead ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'
                             }`}>
                               {notification.Title}
                             </h3>
@@ -325,18 +325,18 @@ const Notifications = () => {
                           </div>
 
                           {/* Message */}
-                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                             {notification.Message}
                           </p>
 
                           {/* Footer */}
                           <div className="flex items-center gap-4 text-xs">
-                            <div className="flex items-center text-gray-500">
+                            <div className="flex items-center text-gray-500 dark:text-gray-400">
                               <Clock className="h-4 w-4 mr-1" />
                               {formatRelativeTime(notification.CreatedAt)}
                             </div>
                             {notification.DocumentId && (
-                              <div className="flex items-center text-primary-600 font-medium">
+                              <div className="flex items-center text-primary-600 dark:text-primary-400 font-medium">
                                 <FileText className="h-4 w-4 mr-1" />
                                 Xem văn bản
                                 <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
@@ -353,7 +353,7 @@ const Notifications = () => {
                                 e.stopPropagation();
                                 handleMarkAsRead(notification.NotificationId);
                               }}
-                              className="px-4 py-2 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-all duration-200 font-medium"
+                              className="px-4 py-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-all duration-200 font-medium"
                               title="Đánh dấu đã đọc"
                             >
                               <CheckCheck className="h-5 w-5" />
@@ -372,9 +372,9 @@ const Notifications = () => {
 
       {/* Pagination */}
       {pagination.total_pages > 1 && (
-        <div className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            Trang <span className="font-semibold text-gray-900">{pagination.page}</span> / {pagination.total_pages}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center justify-between">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Trang <span className="font-semibold text-gray-900 dark:text-white">{pagination.page}</span> / {pagination.total_pages}
           </div>
           <div className="flex gap-2">
             <Button

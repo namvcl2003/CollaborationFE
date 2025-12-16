@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { notificationsAPI } from '../../api/notifications';
 import { useAuthStore } from '../../store/authStore';
+import Avatar from '../common/Avatar';
+import DarkModeToggle from '../common/DarkModeToggle';
 import logoWeb from '../../../assets/images/logo_web3.png';
 
 const Navbar = () => {
@@ -40,7 +42,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -50,7 +52,7 @@ const Navbar = () => {
                 alt="Logo"
                 className="h-10 w-auto"
               />
-              <span className="ml-3 text-xl font-semibold text-gray-900">
+              <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">
                 Document System
               </span>
             </Link>
@@ -60,7 +62,7 @@ const Navbar = () => {
             {/* Notifications */}
             <Link
               to="/notifications"
-              className="relative p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+              className="relative p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <Bell className="h-6 w-6" />
               {unreadCount > 0 && (
@@ -70,34 +72,35 @@ const Navbar = () => {
               )}
             </Link>
 
+            {/* Dark Mode Toggle */}
+            <DarkModeToggle />
+
             {/* User Menu */}
             <div className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100"
+                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary-600" />
-                </div>
+                <Avatar user={user} size="sm" />
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-gray-900">{user?.FullName}</p>
-                  <p className="text-xs text-gray-500">{user?.role?.RoleName}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.FullName}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role?.RoleName}</p>
                 </div>
-                <ChevronDown className="h-4 w-4 text-gray-600" />
+                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-300" />
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
                   <Link
                     to="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => setShowUserMenu(false)}
                   >
                     Thông tin cá nhân
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
                     Đăng xuất

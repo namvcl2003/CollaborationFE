@@ -46,6 +46,24 @@ export const documentsAPI = {
     return response.data;
   },
 
+  downloadVersion: async (documentId, versionId) => {
+    const response = await axios.get(`/documents/${documentId}/download`, {
+      params: { version_id: versionId },
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  compareVersions: async (documentId, version1Id, version2Id) => {
+    const response = await axios.get(`/documents/${documentId}/versions/compare`, {
+      params: {
+        version1: version1Id,
+        version2: version2Id,
+      },
+    });
+    return response.data;
+  },
+
   getCategories: async () => {
     const response = await axios.get('/documents/categories/list');
     return response.data;
@@ -63,6 +81,27 @@ export const documentsAPI = {
 
   addComment: async (id, data) => {
     const response = await axios.post(`/documents/${id}/comments`, data);
+    return response.data;
+  },
+
+  deleteDocument: async (id) => {
+    const response = await axios.delete(`/documents/${id}`);
+    return response.data;
+  },
+
+  // Pin/Unpin operations
+  pinDocument: async (documentId) => {
+    const response = await axios.post(`/documents/${documentId}/pin`);
+    return response.data;
+  },
+
+  unpinDocument: async (documentId) => {
+    const response = await axios.delete(`/documents/${documentId}/pin`);
+    return response.data;
+  },
+
+  getPinnedDocuments: async (params = {}) => {
+    const response = await axios.get('/documents/pinned', { params });
     return response.data;
   },
 };

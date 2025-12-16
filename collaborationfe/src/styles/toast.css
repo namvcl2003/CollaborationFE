@@ -1,0 +1,93 @@
+/* Modern Web Toast Animations */
+
+/* Smooth slide-in from bottom-right */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Smooth slide-out to right */
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Fade in animation (for top-center) */
+@keyframes fadeIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Fade out animation */
+@keyframes fadeOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+
+/* Modern Toast Container */
+.modern-toast {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+/* Custom styling for react-hot-toast container */
+.modern-toast-container {
+  top: 20px !important;
+}
+
+/* Exit animation */
+.modern-toast[data-exiting="true"] {
+  animation: fadeOut 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* Subtle hover effect */
+.modern-toast:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.15s ease;
+}
+
+/* Loading toast pulse */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.modern-toast-loading svg {
+  animation: spin 1s linear infinite;
+}
+
+/* Ensure clean layout */
+.modern-toast {
+  position: relative;
+  overflow: visible;
+}
+
+/* Clean transitions */
+.modern-toast * {
+  transition: all 0.15s ease;
+}

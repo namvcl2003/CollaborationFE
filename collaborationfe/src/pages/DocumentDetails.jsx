@@ -69,7 +69,7 @@ const DocumentDetails = () => {
   if (!document) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Không tìm thấy văn bản</p>
+        <p className="text-gray-500 dark:text-gray-400">Không tìm thấy văn bản</p>
         <Button onClick={() => navigate('/documents')} className="mt-4">
           Quay lại
         </Button>
@@ -97,8 +97,8 @@ const DocumentDetails = () => {
               Quay lại
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{document.Title}</h1>
-              <p className="mt-2 text-gray-600">{document.DocumentNumber}</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{document.Title}</h1>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">{document.DocumentNumber}</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
@@ -129,7 +129,7 @@ const DocumentDetails = () => {
 
         {/* Workflow Actions */}
         <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Thao tác văn bản
           </h2>
           <WorkflowActions 
@@ -140,7 +140,7 @@ const DocumentDetails = () => {
 
         {/* Tabs */}
         <div className="card">
-          <div className="border-b border-gray-200 mb-6">
+          <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
             <nav className="-mb-px flex space-x-8">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -151,8 +151,8 @@ const DocumentDetails = () => {
                     className={`
                       flex items-center py-4 px-1 border-b-2 font-medium text-sm
                       ${activeTab === tab.id
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                       }
                     `}
                   >
@@ -169,46 +169,46 @@ const DocumentDetails = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Mô tả</h3>
-                  <p className="text-gray-900">
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Mô tả</h3>
+                  <p className="text-gray-900 dark:text-white">
                     {document.Description || 'Không có mô tả'}
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Loại văn bản</h3>
-                  <p className="text-gray-900">{document.category?.CategoryName}</p>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Loại văn bản</h3>
+                  <p className="text-gray-900 dark:text-white">{document.category?.CategoryName}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Người tạo</h3>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Người tạo</h3>
                   <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-900">{document.created_by?.FullName}</span>
+                    <User className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <span className="text-gray-900 dark:text-white">{document.created_by?.FullName}</span>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Ngày tạo</h3>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Ngày tạo</h3>
                   <div className="flex items-center space-x-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-900">{formatDate(document.CreatedAt)}</span>
+                    <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <span className="text-gray-900 dark:text-white">{formatDate(document.CreatedAt)}</span>
                   </div>
                 </div>
 
                 {document.DueDate && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Hạn chót</h3>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Hạn chót</h3>
                     <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-900">{formatDate(document.DueDate)}</span>
+                      <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-gray-900 dark:text-white">{formatDate(document.DueDate)}</span>
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">File đính kèm</h3>
-                  <p className="text-gray-900 truncate" title={document.FileName}>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">File đính kèm</h3>
+                  <p className="text-gray-900 dark:text-white truncate" title={document.FileName}>
                     {document.FileName}
                   </p>
                 </div>

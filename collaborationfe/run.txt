@@ -1,1 +1,134 @@
 npm run dev
+
+
+# # # version: '3.8'
+
+# # # services:
+# # #   collabora:
+# # #     image: collabora/code:latest
+# # #     container_name: collabora-online
+# # #     ports:
+# # #       - "9980:9980"
+# # #     environment:
+# # #       # Cho phép tất cả domain kết nối (development mode)
+# # #       - domain=.*
+      
+# # #       # Tắt SSL cho môi trường local
+# # #       - extra_params=--o:ssl.enable=false --o:ssl.termination=true --o:welcome.enable=false --o:net.frame_ancestors=* --o:logging.level=trace
+      
+# # #       # Admin console credentials
+# # #       - username=admin
+# # #       - password=admin123
+      
+# # #       # Dictionaries (bao gồm tiếng Việt)
+# # #       - dictionaries=en_US vi_VN
+      
+# # #       # Không tự generate SSL cert
+# # #       - DONT_GEN_SSL_CERT=true
+      
+# # #       # Server name
+# # #       - server_name=collabora-local
+    
+# # #     # Resource limits
+# # #     deploy:
+# # #       resources:
+# # #         limits:
+# # #           cpus: '2.0'
+# # #           memory: 2G
+# # #         reservations:
+# # #           memory: 1G
+    
+# # #     # Restart policy
+# # #     restart: unless-stopped
+    
+# # #     # Health check
+# # #     healthcheck:
+# # #       test: ["CMD", "curl", "-f", "http://localhost:9980/"]
+# # #       interval: 30s
+# # #       timeout: 10s
+# # #       retries: 5
+# # #       start_period: 60s
+    
+# # #     # Logging
+# # #     logging:
+# # #       driver: "json-file"
+# # #       options:
+# # #         max-size: "10m"
+# # #         max-file: "3"
+
+# # # networks:
+# # #   default:
+# # #     name: collabora-network
+
+# version: '3.8'
+
+# services:
+#   collabora:
+#     image: collabora/code:latest
+#     container_name: collabora-online
+#     ports:
+#       - "9980:9980"
+#     environment:
+#       - aliasgroup1=http://localhost:3000
+#       - aliasgroup2=http://host.docker.internal:8000
+#       - extra_params=--o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors=http://localhost:3000
+#       - username=admin
+#       - password=admin123
+#       - DONT_GEN_SSL_CERT=1
+#     restart: unless-stopped
+#     extra_hosts:
+#       - "host.docker.internal:host-gateway"
+
+
+# # services:
+# #   collabora:
+# #     image: collabora/code:latest
+# #     container_name: collabora-online
+# #     ports:
+# #       - "9980:9980"
+# #     environment:
+# #       # CRITICAL: domain must be the FastAPI WOPI host domain
+# #       # Collabora will make requests TO this domain
+# #       - "domain=host\\.docker\\.internal:8000"
+      
+# #       # Allow React to embed iframe
+# #       - "extra_params=--o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors=http://localhost:3000 --o:logging.level=trace"
+      
+# #       # Admin credentials
+# #       - "username=admin"
+# #       - "password=admin123"
+      
+# #       # Don't generate SSL cert
+# #       - "DONT_GEN_SSL_CERT=1"
+    
+# #     restart: unless-stopped
+    
+# #     # Allow container to access host
+# #     extra_hosts:
+# #       - "host.docker.internal:host-gateway"
+
+
+version: '3.8'
+
+services:
+  collabora:
+    image: collabora/code:latest
+    container_name: collabora-online
+    ports:
+      - "9980:9980"
+    environment:
+      - domain=.*
+      - DONT_GEN_SSL_CERT=true
+      - extra_params=--o:ssl.enable=false --o:ssl.termination=true --o:welcome.enable=false --o:net.frame_ancestors=*
+
+      # Optional: enabling verbose logs
+      - username=admin
+      - password=admin123
+
+      # Dictionaries (optional)
+      - dictionaries=en_US vi_VN
+
+    restart: unless-stopped
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

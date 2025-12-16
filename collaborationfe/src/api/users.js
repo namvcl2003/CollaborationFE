@@ -64,6 +64,15 @@ export const usersAPI = {
   // ==========================================
   
   /**
+   * Get users based on role (Manager: department users, Admin: all users)
+   * @param {Object} params - Query parameters
+   */
+  getUsers: async (params = {}) => {
+    const response = await axios.get('/users/', { params });
+    return response.data;
+  },
+
+  /**
    * Get all users with pagination and search
    * @param {number} page - Page number (default: 1)
    * @param {number} pageSize - Items per page (default: 10)
@@ -74,11 +83,11 @@ export const usersAPI = {
       page,
       page_size: pageSize,
     };
-    
+
     if (search) {
       params.search = search;
     }
-    
+
     const response = await axios.get('/users/', { params });
     return response.data;
   },
@@ -145,7 +154,7 @@ export const usersAPI = {
    * Get list of all roles
    */
   getRoles: async () => {
-    const response = await axios.get('/users/roles/list');
+    const response = await axios.get('/users/roles');
     return response.data;
   },
 
@@ -153,7 +162,7 @@ export const usersAPI = {
    * Get list of all departments
    */
   getDepartments: async () => {
-    const response = await axios.get('/users/departments/list');
+    const response = await axios.get('/users/departments');
     return response.data;
   },
 

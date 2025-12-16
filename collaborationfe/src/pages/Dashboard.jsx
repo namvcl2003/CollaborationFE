@@ -1,39 +1,36 @@
 import {
-    Activity,
-    AlertCircle,
-    ArrowDown,
-    ArrowUp,
-    CheckCircle,
-    Clock,
-    FileText,
-    Plus,
-    TrendingDown,
-    TrendingUp,
-    Users,
-    Zap
+  Activity,
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  CheckCircle,
+  Clock,
+  FileText,
+  Plus,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  Zap
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    BarChart,
-    Bar,
-    LineChart,
-    Line,
-    PieChart,
-    Pie,
-    Cell,
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts';
 import { documentsAPI } from '../api/documents';
 import { workflowAPI } from '../api/workflow';
-import Button from '../components/common/Button';
 import StatusBadge from '../components/common/StatusBadge';
 import { useAuthStore } from '../store/authStore';
 import { formatRelativeTime } from '../utils/helpers';
@@ -48,8 +45,21 @@ const Dashboard = () => {
     rejected: 0,
     inProgress: 0,
   });
+  const [trends, setTrends] = useState({
+    total: 0,
+    approved: 0,
+    inProgress: 0,
+    draft: 0,
+  });
+  const [performance, setPerformance] = useState({
+    avgProcessingTime: 0,
+    processingTimeTrend: 0,
+    approvalRate: 0,
+    efficiencyScore: 0,
+  });
   const [recentDocuments, setRecentDocuments] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [pendingTasks, setPendingTasks] = useState(0);
   const [loading, setLoading] = useState(true);
   const [trendData, setTrendData] = useState([]);
 
@@ -59,8 +69,25 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch all documents for statistics
-      const allDocs = await documentsAPI.getDocuments({ page: 1, page_size: 100 });
+      // Fetch all documents for statistics (increase limit for accurate stats)
+      const allDocs = await documentsAPI.getDocuments({ page: 1, page_size: 1000 });
+
+      // Calculate current week stats
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+      // Current week documents
+      const currentWeekDocs = allDocs.items.filter(d => {
+        const createdAt = new Date(d.CreatedAt);
+        return createdAt >= oneWeekAgo;
+      });
+
+      // Last week documents
+      const lastWeekDocs = allDocs.items.filter(d => {
+        const createdAt = new Date(d.CreatedAt);
+        return createdAt >= twoWeeksAgo && createdAt < oneWeekAgo;
+      });
 
       // Calculate stats
       const statsCounts = {
@@ -72,6 +99,100 @@ const Dashboard = () => {
         inProgress: allDocs.items.filter(d => ['PENDING', 'IN_REVIEW'].includes(d.status?.StatusCode)).length,
       };
       setStats(statsCounts);
+
+      // Calculate trends (percentage change from last week)
+      const calculateTrend = (current, last) => {
+        if (last === 0) return current > 0 ? 100 : 0;
+        return Math.round(((current - last) / last) * 100);
+      };
+
+      const currentWeekStats = {
+        total: currentWeekDocs.length,
+        approved: currentWeekDocs.filter(d => d.status?.StatusCode === 'APPROVED').length,
+        inProgress: currentWeekDocs.filter(d => ['PENDING', 'IN_REVIEW'].includes(d.status?.StatusCode)).length,
+        draft: currentWeekDocs.filter(d => d.status?.StatusCode === 'DRAFT').length,
+      };
+
+      const lastWeekStats = {
+        total: lastWeekDocs.length,
+        approved: lastWeekDocs.filter(d => d.status?.StatusCode === 'APPROVED').length,
+        inProgress: lastWeekDocs.filter(d => ['PENDING', 'IN_REVIEW'].includes(d.status?.StatusCode)).length,
+        draft: lastWeekDocs.filter(d => d.status?.StatusCode === 'DRAFT').length,
+      };
+
+      setTrends({
+        total: calculateTrend(currentWeekStats.total, lastWeekStats.total),
+        approved: calculateTrend(currentWeekStats.approved, lastWeekStats.approved),
+        inProgress: calculateTrend(currentWeekStats.inProgress, lastWeekStats.inProgress),
+        draft: calculateTrend(currentWeekStats.draft, lastWeekStats.draft),
+      });
+
+      // Calculate performance metrics
+      const approvedDocs = allDocs.items.filter(d =>
+        d.status?.StatusCode === 'APPROVED' && d.ApprovedAt && d.CreatedAt
+      );
+
+      // Calculate average processing time (from creation to approval)
+      let totalProcessingTime = 0;
+      if (approvedDocs.length > 0) {
+        approvedDocs.forEach(doc => {
+          const created = new Date(doc.CreatedAt);
+          const approved = new Date(doc.ApprovedAt);
+          const diffInDays = (approved - created) / (1000 * 60 * 60 * 24);
+          totalProcessingTime += diffInDays;
+        });
+      }
+      const avgTime = approvedDocs.length > 0 ? totalProcessingTime / approvedDocs.length : 0;
+
+      // Calculate processing time for last month
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const lastMonthApproved = approvedDocs.filter(d => {
+        const approvedDate = new Date(d.ApprovedAt);
+        return approvedDate >= oneMonthAgo;
+      });
+
+      let lastMonthTotalTime = 0;
+      if (lastMonthApproved.length > 0) {
+        lastMonthApproved.forEach(doc => {
+          const created = new Date(doc.CreatedAt);
+          const approved = new Date(doc.ApprovedAt);
+          const diffInDays = (approved - created) / (1000 * 60 * 60 * 24);
+          lastMonthTotalTime += diffInDays;
+        });
+      }
+      const lastMonthAvgTime = lastMonthApproved.length > 0 ? lastMonthTotalTime / lastMonthApproved.length : avgTime;
+
+      // Calculate processing time trend
+      const timeTrend = lastMonthAvgTime > 0
+        ? Math.round(((lastMonthAvgTime - avgTime) / lastMonthAvgTime) * 100)
+        : 0;
+
+      // Calculate approval rate
+      const completedDocs = allDocs.items.filter(d =>
+        d.status?.StatusCode === 'APPROVED' || d.status?.StatusCode === 'REJECTED'
+      );
+      const approvalRate = completedDocs.length > 0
+        ? Math.round((approvedDocs.length / completedDocs.length) * 100)
+        : 0;
+
+      // Calculate efficiency score (based on approval rate and processing time)
+      let efficiencyScore = 'Tốt';
+      if (approvalRate >= 80 && avgTime <= 3) {
+        efficiencyScore = 'Xuất sắc';
+      } else if (approvalRate >= 60 && avgTime <= 5) {
+        efficiencyScore = 'Tốt';
+      } else if (approvalRate >= 40) {
+        efficiencyScore = 'Trung bình';
+      } else {
+        efficiencyScore = 'Cần cải thiện';
+      }
+
+      setPerformance({
+        avgProcessingTime: avgTime,
+        processingTimeTrend: timeTrend,
+        approvalRate: approvalRate,
+        efficiencyScore: efficiencyScore,
+      });
 
       // Calculate trend data from real documents (last 7 days)
       const today = new Date();
@@ -107,7 +228,22 @@ const Dashboard = () => {
       // Fetch assignments if user is manager level
       if (user?.role?.RoleLevel >= 2) {
         const assignmentsData = await workflowAPI.getMyAssignments();
+        // Filter to only show pending tasks (not completed)
+        const activeTasks = assignmentsData.filter(a =>
+          a.document?.status?.StatusCode !== 'APPROVED' &&
+          a.document?.status?.StatusCode !== 'REJECTED' &&
+          a.document?.CurrentHandlerUserId === user?.UserId
+        );
         setAssignments(assignmentsData);
+        setPendingTasks(activeTasks.length);
+      } else {
+        // For assistants, count documents they're handling
+        const myDocs = allDocs.items.filter(d =>
+          d.CurrentHandlerUserId === user?.UserId &&
+          d.status?.StatusCode !== 'APPROVED' &&
+          d.status?.StatusCode !== 'REJECTED'
+        );
+        setPendingTasks(myDocs.length);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -140,11 +276,11 @@ const Dashboard = () => {
   ];
 
   const StatCard = ({ icon: Icon, title, value, change, color, bgColor, trend }) => (
-    <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${bgColor} p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
+    <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${bgColor} dark:from-gray-800 dark:to-gray-700 p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-4xl font-bold text-gray-900 mb-2">{value}</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{title}</p>
+          <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{value}</p>
           {change !== undefined && (
             <div className="flex items-center space-x-1">
               {trend === 'up' ? (
@@ -175,8 +311,8 @@ const Dashboard = () => {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-          <p className="text-sm font-medium text-gray-900">{payload[0].payload.name}</p>
+        <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{payload[0].payload.name}</p>
           {payload.map((entry, index) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: <span className="font-bold">{entry.value}</span>
@@ -192,8 +328,8 @@ const Dashboard = () => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-600 mx-auto"></div>
-          <p className="mt-4 text-lg font-medium text-gray-600">Đang tải dữ liệu...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 dark:border-primary-800 border-t-primary-600 dark:border-t-primary-400 mx-auto"></div>
+          <p className="mt-4 text-lg font-medium text-gray-600 dark:text-gray-300">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
@@ -217,7 +353,7 @@ const Dashboard = () => {
             </div>
             <div className="flex items-center space-x-2 bg-white bg-opacity-20 rounded-lg px-4 py-2">
               <Zap className="h-5 w-5" />
-              <span className="font-medium">{assignments.length} công việc đang chờ</span>
+              <span className="font-medium">{pendingTasks} công việc đang chờ</span>
             </div>
           </div>
         </div>
@@ -231,8 +367,8 @@ const Dashboard = () => {
           icon={FileText}
           title="Tổng văn bản"
           value={stats.total}
-          change={12}
-          trend="up"
+          // change={Math.abs(trends.total)}
+          // trend={trends.total >= 0 ? "up" : "down"}
           color="text-blue-600"
           bgColor="from-blue-50 to-blue-100"
         />
@@ -240,8 +376,8 @@ const Dashboard = () => {
           icon={CheckCircle}
           title="Đã duyệt"
           value={stats.approved}
-          change={8}
-          trend="up"
+          change={Math.abs(trends.approved)}
+          trend={trends.approved >= 0 ? "up" : "down"}
           color="text-green-600"
           bgColor="from-green-50 to-green-100"
         />
@@ -249,8 +385,8 @@ const Dashboard = () => {
           icon={Clock}
           title="Đang xử lý"
           value={stats.inProgress}
-          change={5}
-          trend="down"
+          change={Math.abs(trends.inProgress)}
+          trend={trends.inProgress >= 0 ? "up" : "down"}
           color="text-yellow-600"
           bgColor="from-yellow-50 to-yellow-100"
         />
@@ -258,8 +394,8 @@ const Dashboard = () => {
           icon={AlertCircle}
           title="Bản thảo"
           value={stats.draft}
-          change={3}
-          trend="up"
+          change={Math.abs(trends.draft)}
+          trend={trends.draft >= 0 ? "up" : "down"}
           color="text-purple-600"
           bgColor="from-purple-50 to-purple-100"
         />
@@ -268,9 +404,9 @@ const Dashboard = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status Pie Chart */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-            <div className="h-2 w-2 rounded-full bg-primary-600 mr-2"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <div className="h-2 w-2 rounded-full bg-primary-600 dark:bg-primary-400 mr-2"></div>
             Phân bố trạng thái văn bản
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -295,9 +431,9 @@ const Dashboard = () => {
         </div>
 
         {/* Priority Bar Chart */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-            <div className="h-2 w-2 rounded-full bg-primary-600 mr-2"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <div className="h-2 w-2 rounded-full bg-primary-600 dark:bg-primary-400 mr-2"></div>
             Phân loại độ ưu tiên
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -317,9 +453,9 @@ const Dashboard = () => {
       </div>
 
       {/* Trend Line Chart */}
-      <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-          <div className="h-2 w-2 rounded-full bg-primary-600 mr-2"></div>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+          <div className="h-2 w-2 rounded-full bg-primary-600 dark:bg-primary-400 mr-2"></div>
           Xu hướng văn bản 7 ngày qua
         </h3>
         <ResponsiveContainer width="100%" height={300}>
@@ -384,8 +520,19 @@ const Dashboard = () => {
             <h4 className="text-sm font-medium opacity-90">Thời gian xử lý TB</h4>
             <Clock className="h-6 w-6 opacity-80" />
           </div>
-          <p className="text-4xl font-bold mb-2">2.3 ngày</p>
-          <p className="text-sm opacity-80">Giảm 15% so với tháng trước</p>
+          <p className="text-4xl font-bold mb-2">
+            {performance.avgProcessingTime > 0
+              ? performance.avgProcessingTime.toFixed(1)
+              : '0'} ngày
+          </p>
+          {performance.processingTimeTrend !== 0 && (
+            <p className="text-sm opacity-80">
+              {performance.processingTimeTrend > 0 ? 'Giảm' : 'Tăng'} {Math.abs(performance.processingTimeTrend)}% so với tháng trước
+            </p>
+          )}
+          {performance.processingTimeTrend === 0 && (
+            <p className="text-sm opacity-80">Không đổi so với tháng trước</p>
+          )}
         </div>
 
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
@@ -393,10 +540,19 @@ const Dashboard = () => {
             <h4 className="text-sm font-medium opacity-90">Hiệu suất</h4>
             <Zap className="h-6 w-6 opacity-80" />
           </div>
-          <p className="text-4xl font-bold mb-2">Tốt</p>
+          <p className="text-4xl font-bold mb-2">{performance.efficiencyScore}</p>
           <div className="flex items-center space-x-1 mt-2">
-            <ArrowUp className="h-4 w-4" />
-            <span className="text-sm">+12% hiệu quả</span>
+            {performance.approvalRate >= 60 ? (
+              <>
+                <ArrowUp className="h-4 w-4" />
+                <span className="text-sm">Tỷ lệ duyệt: {performance.approvalRate}%</span>
+              </>
+            ) : (
+              <>
+                <ArrowDown className="h-4 w-4" />
+                <span className="text-sm">Tỷ lệ duyệt: {performance.approvalRate}%</span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -432,16 +588,16 @@ const Dashboard = () => {
       {/* Assignments for managers */}
       {user?.role?.RoleLevel >= 2 && assignments.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                  <Users className="h-6 w-6 mr-2 text-primary-600" />
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                  <Users className="h-6 w-6 mr-2 text-primary-600 dark:text-primary-400" />
                   Công việc cần xử lý
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">{assignments.length} công việc đang chờ</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{pendingTasks} công việc đang chờ</p>
               </div>
-              <Link to="/assignments" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/assignments" className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
                 Xem tất cả →
               </Link>
             </div>
@@ -450,20 +606,20 @@ const Dashboard = () => {
                 <Link
                   key={assignment.AssignmentId}
                   to={`/documents/${assignment.document?.DocumentId}`}
-                  className="block p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg hover:from-primary-50 hover:to-primary-100 transition-all duration-200 border border-gray-200 hover:border-primary-300"
+                  className="block p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg hover:from-primary-50 hover:to-primary-100 dark:hover:from-primary-900/30 dark:hover:to-primary-800/30 transition-all duration-200 border border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-600"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
                         {assignment.document?.Title}
                       </h3>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {assignment.document?.DocumentNumber}
                       </p>
                     </div>
                     <StatusBadge status={assignment.document?.status?.StatusCode} />
                   </div>
-                  <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                  <div className="flex items-center justify-between mt-3 text-xs text-gray-500 dark:text-gray-400">
                     <span>Giao bởi: {assignment.assigned_by?.FullName}</span>
                     <span>{formatRelativeTime(assignment.AssignedAt)}</span>
                   </div>
@@ -473,36 +629,36 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Documents - In grid with assignments */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                  <FileText className="h-6 w-6 mr-2 text-primary-600" />
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                  <FileText className="h-6 w-6 mr-2 text-primary-600 dark:text-primary-400" />
                   Văn bản gần đây
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">Cập nhật mới nhất</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Cập nhật mới nhất</p>
               </div>
-              <Link to="/documents" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/documents" className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
                 Xem tất cả →
               </Link>
             </div>
             <div className="space-y-3">
               {recentDocuments.length === 0 ? (
                 <div className="text-center py-8">
-                  <FileText className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                  <p className="text-gray-500 text-sm">Chưa có văn bản nào</p>
+                  <FileText className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">Chưa có văn bản nào</p>
                 </div>
               ) : (
                 recentDocuments.map((doc) => (
                   <Link
                     key={doc.DocumentId}
                     to={`/documents/${doc.DocumentId}`}
-                    className="block p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg hover:from-primary-50 hover:to-primary-100 transition-all duration-200 border border-gray-200 hover:border-primary-300"
+                    className="block p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg hover:from-primary-50 hover:to-primary-100 dark:hover:from-primary-900/30 dark:hover:to-primary-800/30 transition-all duration-200 border border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-600"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{doc.Title}</h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">{doc.Title}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                           {doc.DocumentNumber}
                         </p>
                       </div>
@@ -511,7 +667,7 @@ const Dashboard = () => {
                         <StatusBadge priority={doc.Priority} />
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
                       {formatRelativeTime(doc.CreatedAt)}
                     </p>
                   </Link>
@@ -524,46 +680,46 @@ const Dashboard = () => {
 
       {/* Recent Documents - Full width for assistants */}
       {(user?.role?.RoleLevel < 2 || assignments.length === 0) && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                <FileText className="h-6 w-6 mr-2 text-primary-600" />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                <FileText className="h-6 w-6 mr-2 text-primary-600 dark:text-primary-400" />
                 Văn bản gần đây
               </h2>
-              <p className="text-sm text-gray-500 mt-1">Cập nhật mới nhất</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Cập nhật mới nhất</p>
             </div>
-            <Link to="/documents" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+            <Link to="/documents" className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
               Xem tất cả →
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {recentDocuments.length === 0 ? (
               <div className="col-span-full text-center py-12">
-                <FileText className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500">Chưa có văn bản nào</p>
+                <FileText className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">Chưa có văn bản nào</p>
               </div>
             ) : (
               recentDocuments.map((doc) => (
                 <Link
                   key={doc.DocumentId}
                   to={`/documents/${doc.DocumentId}`}
-                  className="block p-5 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl hover:from-primary-50 hover:to-primary-100 transition-all duration-200 border border-gray-200 hover:border-primary-300 hover:shadow-lg"
+                  className="block p-5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl hover:from-primary-50 hover:to-primary-100 dark:hover:from-primary-900/30 dark:hover:to-primary-800/30 transition-all duration-200 border border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <FileText className="h-8 w-8 text-primary-600 flex-shrink-0" />
+                    <FileText className="h-8 w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
                     <div className="flex flex-col items-end space-y-1.5">
                       <StatusBadge status={doc.status?.StatusCode} />
                       <StatusBadge priority={doc.Priority} />
                     </div>
                   </div>
-                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{doc.Title}</h3>
-                  <p className="text-sm text-gray-600 mb-3">
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">{doc.Title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     {doc.DocumentNumber}
                   </p>
-                  <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-200">
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-3 border-t border-gray-200 dark:border-gray-600">
                     <span>{formatRelativeTime(doc.CreatedAt)}</span>
-                    <span className="text-primary-600 font-medium">Xem chi tiết →</span>
+                    <span className="text-primary-600 dark:text-primary-400 font-medium">Xem chi tiết →</span>
                   </div>
                 </Link>
               ))

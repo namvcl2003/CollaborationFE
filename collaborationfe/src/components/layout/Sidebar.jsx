@@ -1,5 +1,8 @@
 import {
+    Activity,
     Bell,
+    Building2,
+    CheckCircle,
     CheckSquare,
     ChevronLeft,
     ChevronRight,
@@ -40,7 +43,13 @@ const Sidebar = () => {
       name: 'Công việc được giao',
       href: '/assignments',
       icon: CheckSquare,
-      show: roleLevel >= 2, // Phó phòng và trưởng phòng
+      show: roleLevel <= 2, // Trợ lý và Phó phòng (cấp dưới)
+    },
+    {
+      name: 'VB đã duyệt - Phòng ban',
+      href: '/department-approved',
+      icon: CheckCircle,
+      show: true, // Tất cả mọi người đều xem được
     },
     {
       name: 'Thông báo',
@@ -54,24 +63,45 @@ const Sidebar = () => {
       icon: Users,
       show: roleLevel >= 3, // Trưởng phòng trở lên
     },
+    {
+      name: 'Mẫu Văn bản',
+      href: '/templates',
+      icon: FileText,
+      show: roleLevel >= 3, // Trưởng phòng trở lên
+    },
+    // Admin Menu
+    {
+      name: 'Admin Dashboard',
+      href: '/admin/dashboard',
+      icon: Activity,
+      show: roleLevel >= 4, // Chỉ Admin
+      badge: 'Admin',
+    },
+    {
+      name: 'Quản lý Phòng ban',
+      href: '/admin/departments',
+      icon: Building2,
+      show: roleLevel >= 4, // Chỉ Admin
+      badge: 'Admin',
+    },
   ];
 
   return (
     <div
-      className={`bg-white border-r border-gray-200 min-h-screen transition-all duration-300 relative ${
+      className={`bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-screen transition-all duration-300 relative ${
         isCollapsed ? 'w-16' : 'w-64'
       }`}
     >
       {/* Toggle Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-6 bg-white border border-gray-200 rounded-full p-1 shadow-sm hover:shadow-md transition-shadow z-10"
+        className="absolute -right-3 top-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-1 shadow-sm hover:shadow-md transition-shadow z-10"
         title={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
       >
         {isCollapsed ? (
-          <ChevronRight className="h-4 w-4 text-gray-600" />
+          <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-300" />
         ) : (
-          <ChevronLeft className="h-4 w-4 text-gray-600" />
+          <ChevronLeft className="h-4 w-4 text-gray-600 dark:text-gray-300" />
         )}
       </button>
 
@@ -84,8 +114,8 @@ const Sidebar = () => {
               className={({ isActive }) =>
                 `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   isActive
-                    ? 'bg-primary-50 text-primary-600'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                 } ${isCollapsed ? 'justify-center' : ''}`
               }
               title={isCollapsed ? item.name : ''}
